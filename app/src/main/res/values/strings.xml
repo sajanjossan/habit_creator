@@ -1,0 +1,15 @@
+<resources>
+    <string name="app_name">Habit Creator</string>
+    <string name="tab_text_1">Time</string>
+    <string name="tab_text_2">Days</string>
+    <string name="twenty_one">21</string>
+    <string name="ninety_one">91</string>
+    <string name="_"> </string>
+    <string name="two">2</string>
+    <string name="four">4</string>
+    <string name="reset">Reset</string>
+    <string name="enter">Enter</string>
+    <string name="title">TxT</string>
+    <string name="time_formatHH">hh</string>
+    <string name="text">Txt</string>
+</resources>
