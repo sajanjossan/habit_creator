@@ -47,7 +47,7 @@ class MainActivity : AppCompatActivity() {
     private var nStartingDayDate: Int = 0
     private var nStartingDayMonth: Int = 0
     private var nCurrLastDayOfTheYear: Int = 0
-    private var nStartingDayFullDate : Int? = null
+    private var nStartingDayFullDate: Int? = null
 
     private var dayInputIndex: Int = 0
     private var timeInputIndex: Int = 0
@@ -190,7 +190,7 @@ class MainActivity : AppCompatActivity() {
             nStartingDayDate = calendar?.get(Calendar.DAY_OF_MONTH) as Int
             nStartingDayMonth = calendar?.get(Calendar.MONTH) as Int
             nStartingDayFullDate = calendar?.get(Calendar.DATE) as Int
-            sharedPreferencesEdit?.putInt("nStartingDayFullDate",nStartingDayFullDate!!)
+            sharedPreferencesEdit?.putInt("nStartingDayFullDate", nStartingDayFullDate!!)
             sharedPreferencesEdit?.apply()
             sharedPreferencesEdit?.putInt("DateOfStartingDay", nStartingDayDate)
             sharedPreferencesEdit?.apply()
@@ -211,7 +211,7 @@ class MainActivity : AppCompatActivity() {
             val dateOfStartingDay = calendar?.get(Calendar.DAY_OF_MONTH) as Int
             val monthOfStartingDay = calendar?.get(Calendar.MONTH) as Int
             nStartingDayFullDate = calendar?.get(Calendar.DATE) as Int
-            sharedPreferencesEdit?.putInt("nStartingDayFullDate",nStartingDayFullDate!!)
+            sharedPreferencesEdit?.putInt("nStartingDayFullDate", nStartingDayFullDate!!)
             sharedPreferencesEdit?.apply()
             sharedPreferencesEdit?.putInt("DateOfStartingDay", dateOfStartingDay)
             sharedPreferencesEdit?.apply()
@@ -256,7 +256,7 @@ class MainActivity : AppCompatActivity() {
         nStartingDayDate = sharedPreferences?.getInt("DateOfStartingDay", 0) as Int
         nStartingDayMonth = sharedPreferences?.getInt("MonthOfStartingDay", 0) as Int
         nCurrLastDayOfTheYear = sharedPreferences?.getInt("currLastDayOfTheYear", 0) as Int
-        nStartingDayFullDate = sharedPreferences?.getInt("nStartingDayFullDate",0) as Int
+        nStartingDayFullDate = sharedPreferences?.getInt("nStartingDayFullDate", 0) as Int
         if (nCurrLastHH != 0) {
             calTimeIndex(nCurrLastHH, nCurrLastMM, nEndTimeCall)
             timeInputEditText?.setText(nEndTimeCall.toString())
@@ -371,7 +371,7 @@ class MainActivity : AppCompatActivity() {
     fun getEndingDay(): String {
         return if (daysInTime != 0) {
             val cal = Calendar.getInstance().apply {
-                set(Calendar.DATE,nStartingDayFullDate!!)
+                set(Calendar.DATE, nStartingDayFullDate!!)
                 add(Calendar.DATE, daysInTime)
             }
             val endingTimeDate = cal.time.toString()
@@ -406,10 +406,10 @@ class MainActivity : AppCompatActivity() {
         tabLayout?.setupWithViewPager(viewPager)
     }
 
-    Override fun onPause() {
-        super.onPause() 
+    override fun onPause() {
+        super.onPause()
         saveTabSection(tabLayout?.selectedTabPosition!!.toInt())
-}
+    }
 
     override fun onDestroy() {
         super.onDestroy()
