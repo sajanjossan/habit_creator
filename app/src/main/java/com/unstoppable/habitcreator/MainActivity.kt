@@ -406,6 +406,11 @@ class MainActivity : AppCompatActivity() {
         tabLayout?.setupWithViewPager(viewPager)
     }
 
+    Override fun onPause() {
+        super.onPause() 
+        saveTabSection(tabLayout?.selectedTabPosition!!.toInt())
+}
+
     override fun onDestroy() {
         super.onDestroy()
         saveTabSection(tabLayout?.selectedTabPosition!!.toInt())
