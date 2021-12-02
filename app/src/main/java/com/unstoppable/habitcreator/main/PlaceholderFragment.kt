@@ -113,18 +113,15 @@ class PlaceholderFragment(context: Context) : Fragment() {
 
                 if ((nContext).getTimeMode()) {
                     //60 time format
-                    val indexHH = (nContext).getTimeHHIndex()
-                    threadFun(imageView, timeMinUIArray, indexHH)
+                    threadFun(imageView, timeMinUIArray)
+                    //end time edit below
                     rightNoteTextView.text = (nContext).getEndTextViewTime()
                 } else {
                     //24 time format
-                    val indexMM = (nContext).getTimeMinIndex()
-                    threadFun(imageView, timeUiArray,indexMM)
-                    //end time edit below
+                    threadFun(imageView, timeUiArray)
                     rightNoteTextView.text = (nContext).getEndTextViewTime()
                 }
 //              imageView.setImageResource(timeUiArray[timeIndex])
-
 
                 val currLastHH = (nContext).getCurrLastHH()
                 val calendar = Calendar.getInstance()
@@ -175,10 +172,20 @@ class PlaceholderFragment(context: Context) : Fragment() {
         }
     }
 
-    private fun threadFun(im: ImageView, timeArray: Array<Int>, index: Int) {
+    private fun threadFun(im: ImageView, timeArray: Array<Int>) {
         Thread(Runnable {
             while (true) {
-                im.setImageResource(timeArray[index])
+                if ((nContext as MainActivity).getTimeMode()) {
+                    val indexMM = (nContext).getTimeMinIndex()
+                    im.setImageResource(timeArray[indexMM])
+                    if(indexMM >= 60)
+                        break
+                }else{
+                    val indexHH = (nContext).getTimeHHIndex()
+                    im.setImageResource(timeArray[indexHH])
+                    if(indexHH >= 24)
+                        break
+                }
                 Thread.sleep(1000)
             }
         }).start()
