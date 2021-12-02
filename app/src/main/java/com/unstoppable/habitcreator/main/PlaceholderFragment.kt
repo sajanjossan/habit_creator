@@ -48,6 +48,7 @@ class PlaceholderFragment(context: Context) : Fragment() {
 
         val dataArrayClassObj = UIDataArray()
         val timeUiArray = dataArrayClassObj.getTimeUIArray()
+        val timeMinUIArray = dataArrayClassObj.getTimeMinUIArray()
         val daysUIArray = dataArrayClassObj.getDaysUIArray()
         val daysTwentyOneArray = dataArrayClassObj.getDaysTwentyOneUIArray()
         val timeIndex = (nContext as MainActivity).getTimeIndex()
@@ -100,15 +101,24 @@ class PlaceholderFragment(context: Context) : Fragment() {
 
         try {
             if (tabSection!! <= 1) {
-                imageView.setImageResource(timeUiArray[timeIndex])
-                leftNoteTextView.text = (nContext).getStartTextViewTime()
-                rightNoteTextView.text = (nContext).getEndTextViewTime()
-
                 if (getString("TitleStringYears") == "") {
                     topicTextView.text = resources.getString(R.string.text)
                 }else{
                     topicTextView.text = getString("TitleStringYears")
                 }
+                leftNoteTextView.text = (nContext).getStartTextViewTime()
+                if((nContext).getTimeMode()) {
+                    //60 time format
+                    threadFun(imageView, timeMinUIArray)
+                    rightNoteTextView.text = (nContext).getEndTextViewTime()
+                }else{
+                    //24 time format
+                        threadFun(imageView,timeUiArray)
+                        //tirhg time edit below
+                    rightNoteTextView.text = (nContext).getEndTextViewTime()
+                }
+//              imageView.setImageResource(timeUiArray[timeIndex])
+
 
                 val currLastHH = (nContext).getCurrLastHH()
                 val calendar = Calendar.getInstance()
@@ -128,7 +138,6 @@ class PlaceholderFragment(context: Context) : Fragment() {
                 }else{
                     topicTextView.text = getString("TitleStringMonths")
                 }
-
                 if (daysInTime > 21)
                     imageView.setImageResource(daysUIArray[daysIndex])
                 else
@@ -158,6 +167,21 @@ class PlaceholderFragment(context: Context) : Fragment() {
         } else {
             "$int"
         }
+    }
+
+    private fun threadFun(im : ImageView,timeArray : Array<Int>) {
+        Thread(Runnable {
+            while(true) {
+                if((nContext as MainActivity).getTimeMode()) {
+                    //60
+                    im.setImageResource(timeArray[(nContext).getTimeIndex()])
+                }else{
+                    //24
+                    im.setImageResource(timeArray[(nContext).getTimeMinIndex()])
+                }
+                Thread.sleep(62000)
+            }
+        }).start()
     }
 
     companion object {

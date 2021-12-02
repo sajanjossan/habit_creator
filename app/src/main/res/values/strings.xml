@@ -10,6 +10,7 @@
     <string name="reset">Reset</string>
     <string name="enter">Enter</string>
     <string name="title">TxT</string>
-    <string name="time_formatHH">hh</string>
+    <string name="time_formatHint">time</string>
     <string name="text">Txt</string>
+    <string name="zero">0</string>
 </resources>

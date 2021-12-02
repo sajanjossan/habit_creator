@@ -41,6 +41,9 @@ class MainActivity : AppCompatActivity() {
 
     private var calendar: Calendar? = null
 
+    private var nLastHhTmSixty : Int = 0
+    private var nLastMmTmSixty : Int = 0
+    private var nLastSsTmSixty : Int = 0
     private var nCurrLastHH: Int = 0
     private var nCurrLastMM: Int = 0
     private var nEndTimeCall: Int = 0
@@ -50,7 +53,8 @@ class MainActivity : AppCompatActivity() {
     private var nStartingDayFullDate: Int? = null
 
     private var dayInputIndex: Int = 0
-    private var timeInputIndex: Int = 0
+    private var timeInputHHIndex: Int = 0
+    private var timeInputMMIndex: Int = 0
     private var daysInTime: Int = 0
 
     private var currLastHH: Int = 0
@@ -58,6 +62,8 @@ class MainActivity : AppCompatActivity() {
 
     private var strOne = ""
     private var strTwo = ""
+
+    private var timeMode = false
 
     private var tabLayout: TabLayout? = null
 
@@ -107,6 +113,12 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
+        timeInputFloatingBtnID?.setOnLongClickListener {
+            timeMode = !timeMode
+            refreshLayouts()
+            true
+        }
+
         daysInputFloatingButton?.setOnClickListener {
             if (daysLayoutVisibility) {
                 daysInputLayout?.visibility = View.GONE
@@ -132,18 +144,35 @@ class MainActivity : AppCompatActivity() {
         timeInputEditText?.addTextChangedListener(object : TextWatcher {
             override fun afterTextChanged(s: Editable?) {
                 try {
-                    if (s!!.length > 2) {
-                        timeInputEditText!!.setText(s[0].plus(s[1].toString()))
-                    } else if (s.length == 2) {
-                        if (s[0].toInt() == 50 && s[1].toInt() > 52) {
-                            timeInputEditText!!.setText(s[0].plus(resources.getString(R.string.four)))
-                            Toast.makeText(
-                                applicationContext,
-                                "cannot enter more than 24",
-                                Toast.LENGTH_LONG
-                            ).show()
-                        } else if (s[0].toInt() > 50) {
-                            timeInputEditText!!.setText(s[0].plus(""))
+                    if(timeMode){
+                        if (s!!.length > 2) {
+                            timeInputEditText!!.setText(s[0].plus(s[1].toString()))
+                        } else if (s.length == 2) {
+                            if (s[0].toInt() == 54 && s[1].toInt() > 48) {
+                                timeInputEditText!!.setText(s[0].plus(resources.getString(R.string.zero)))
+                                Toast.makeText(
+                                    applicationContext,
+                                    "cannot enter more than 24",
+                                    Toast.LENGTH_LONG
+                                ).show()
+                            } else if (s[0].toInt() > 54) {
+                                timeInputEditText!!.setText(s[0].plus(""))
+                            }
+                        }
+                    }else {
+                        if (s!!.length > 2) {
+                            timeInputEditText!!.setText(s[0].plus(s[1].toString()))
+                        } else if (s.length == 2) {
+                            if (s[0].toInt() == 50 && s[1].toInt() > 52) {
+                                timeInputEditText!!.setText(s[0].plus(resources.getString(R.string.four)))
+                                Toast.makeText(
+                                    applicationContext,
+                                    "cannot enter more than 24",
+                                    Toast.LENGTH_LONG
+                                ).show()
+                            } else if (s[0].toInt() > 50) {
+                                timeInputEditText!!.setText(s[0].plus(""))
+                            }
                         }
                     }
                 } catch (e: Exception) {
@@ -158,21 +187,36 @@ class MainActivity : AppCompatActivity() {
         timeInputEnterButton?.setOnClickListener {
             val endTime = (timeInputEditText?.text).toString().toInt()
             if (endTime > 0) {
-                val currLastHH = calendar?.get(Calendar.HOUR_OF_DAY) as Int
-                val currLastMM = calendar?.get(Calendar.MINUTE) as Int
-                sharedPreferencesEdit?.putInt("currLastHH", currLastHH)
-                sharedPreferencesEdit?.apply()
-                sharedPreferencesEdit?.putInt("currLastMM", currLastMM)
-                sharedPreferencesEdit?.apply()
+                if(timeMode) {
+                    //60
+                    val lastHH = calendar?.get(Calendar.HOUR_OF_DAY) as Int
+                    val lastMM = calendar?.get(Calendar.MINUTE) as Int
+                    val lastSS = calendar?.get(Calendar.SECOND) as Int
+                    sharedPreferencesEdit?.putInt("lastHHTimeModeSixty", lastHH)
+                    sharedPreferencesEdit?.apply()
+                    sharedPreferencesEdit?.putInt("lastMMTimeModeSixty", lastMM)
+                    sharedPreferencesEdit?.apply()
+                    sharedPreferencesEdit?.putInt("lastSSTimeModeSixty", lastSS)
+                    sharedPreferencesEdit?.apply()
+                    calTimeMinIndex(lastHH,lastMM,lastSS,endTime)
+                }else {
+                    //24
+                    val currLastHH = calendar?.get(Calendar.HOUR_OF_DAY) as Int
+                    val currLastMM = calendar?.get(Calendar.MINUTE) as Int
+                    sharedPreferencesEdit?.putInt("currLastHH", currLastHH)
+                    sharedPreferencesEdit?.apply()
+                    sharedPreferencesEdit?.putInt("currLastMM", currLastMM)
+                    sharedPreferencesEdit?.apply()
+                    calTimeHHIndex(currLastHH, currLastMM, endTime)
+                }
                 sharedPreferencesEdit?.putInt("endTime", endTime)
                 sharedPreferencesEdit?.apply()
                 timeInputLayout?.visibility = View.GONE
                 timeLayoutVisibility = false
-                calTimeIndex(currLastHH, currLastMM, endTime)
                 strOne = ""
                 strTwo = ""
             } else {
-                timeInputIndex = 0
+                timeInputHHIndex = 0
                 timeInputLayout?.visibility = View.GONE
                 timeLayoutVisibility = false
                 sharedPreferencesEdit?.putInt("currLastHH", 0)
@@ -249,6 +293,9 @@ class MainActivity : AppCompatActivity() {
     private fun refreshLayouts() {
         sharedPreferences = getSharedPreferences("SharedPreferences", Context.MODE_PRIVATE)
         sharedPreferencesEdit = sharedPreferences!!.edit()
+        nLastHhTmSixty = sharedPreferences?.getInt("lastHHTimeModeSixty",0)as Int
+        nLastMmTmSixty = sharedPreferences?.getInt("lastMMTimeModeSixty",0)as Int
+        nLastSsTmSixty = sharedPreferences?.getInt("lastSSTimeModeSixty",0)as Int
         nCurrLastHH = sharedPreferences?.getInt("currLastHH", 0) as Int
         nCurrLastMM = sharedPreferences?.getInt("currLastMM", 0) as Int
         nEndTimeCall = sharedPreferences?.getInt("endTime", 0) as Int
@@ -257,38 +304,29 @@ class MainActivity : AppCompatActivity() {
         nStartingDayMonth = sharedPreferences?.getInt("MonthOfStartingDay", 0) as Int
         nCurrLastDayOfTheYear = sharedPreferences?.getInt("currLastDayOfTheYear", 0) as Int
         nStartingDayFullDate = sharedPreferences?.getInt("nStartingDayFullDate", 0) as Int
-        if (nCurrLastHH != 0) {
-            calTimeIndex(nCurrLastHH, nCurrLastMM, nEndTimeCall)
-            timeInputEditText?.setText(nEndTimeCall.toString())
-        } else {
-            timeInputIndex = 0
+       
+        if(timeMode){
+           //60
+            if(nLastMmTmSixty != 0){
+                calTimeMinIndex(nLastHhTmSixty,nLastMmTmSixty,nLastSsTmSixty,nEndTimeCall)
+                timeInputEditText?.setText(nEndTimeCall.toString())
+            }else{
+                timeInputMMIndex = 0
+            }
+        }else {
+            //24
+            if (nCurrLastHH != 0) {
+                calTimeHHIndex(nCurrLastHH, nCurrLastMM, nEndTimeCall)
+                timeInputEditText?.setText(nEndTimeCall.toString())
+            } else {
+                timeInputHHIndex = 0
+            }
         }
         if (daysInTime != 0) {
             calDaysIndex(daysInTime, nCurrLastDayOfTheYear)
         } else
             dayInputIndex = 0
         loadViewPagerAdapter()
-    }
-
-    private fun calTimeIndex(lastTimeHH: Int, lastTimeMM: Int, endTime: Int) {
-        val currTimeHH = calendar?.get(Calendar.HOUR_OF_DAY) as Int
-        val currTimeMM = calendar?.get(Calendar.MINUTE) as Int
-        if (currTimeHH < lastTimeHH) {
-            val temp = 24 - lastTimeHH
-            if (currTimeMM >= lastTimeMM)
-                timeInputIndex = temp + currTimeHH
-            else
-                timeInputIndex = temp + (currTimeHH - 1)
-        } else {
-            if (currTimeMM >= lastTimeMM)
-                timeInputIndex = currTimeHH - lastTimeHH
-            else
-                timeInputIndex = (currTimeHH - 1) - lastTimeHH
-        }
-        if (timeInputIndex >= endTime) {
-            timeInputIndex = endTime
-            Toast.makeText(applicationContext, "Time is Up", Toast.LENGTH_LONG).show()
-        }
     }
 
     private fun calDaysIndex(endDayTime: Int, lastDayOfTheYear: Int) {
@@ -300,12 +338,103 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun calTimeHHIndex(lastTimeHH: Int, lastTimeMM: Int, endTime: Int) {
+        val currTimeHH = calendar?.get(Calendar.HOUR_OF_DAY) as Int
+        val currTimeMM = calendar?.get(Calendar.MINUTE) as Int
+        if (currTimeHH < lastTimeHH) {
+            val temp = 24 - lastTimeHH
+            if (currTimeMM >= lastTimeMM)
+                timeInputHHIndex = temp + currTimeHH
+            else
+                timeInputHHIndex = temp + (currTimeHH - 1)
+        } else {
+            if (currTimeMM >= lastTimeMM)
+                timeInputHHIndex = currTimeHH - lastTimeHH
+            else
+                timeInputHHIndex = (currTimeHH - 1) - lastTimeHH
+        }
+        if (timeInputHHIndex >= endTime) {
+            timeInputHHIndex = endTime
+            Toast.makeText(applicationContext, "Time Finish", Toast.LENGTH_LONG).show()
+        }
+    }
+
+    private fun calTimeMinIndex(lastHH: Int,lastMM: Int,lastSS: Int,endTime : Int){
+        val currHh  = calendar?.get(Calendar.HOUR_OF_DAY) as Int
+        val currMin = calendar?.get(Calendar.MINUTE) as Int
+        val currSec = calendar?.get(Calendar.SECOND) as Int
+
+        if(currHh == lastHH) {
+            if(currSec >= lastSS)
+                timeInputMMIndex = currMin - lastMM
+            else
+                timeInputMMIndex = (currMin-1) - lastMM
+        } else if(currHh < lastHH) {
+            if(currHh < 2) {
+                if (currMin >= lastMM) {
+                    if (currSec >= lastSS) {
+                        //set edittext limits for endtime
+                        timeInputMMIndex = endTime
+                        Toast.makeText(applicationContext, "Time Finish", Toast.LENGTH_LONG).show()
+                    }else{
+                        timeInputMMIndex = 60 - 1
+                    }
+                } else {
+                    if(currSec >= lastSS) {
+                        val temp = 60 - lastMM
+                        timeInputMMIndex = temp + currMin
+                    }else {
+                        val temp = 60 - lastMM
+                        timeInputMMIndex = temp + currMin-1
+                    }
+                }
+            }else{
+                //set edittext limits for endtime
+                timeInputMMIndex = endTime
+                Toast.makeText(applicationContext, "Time Finish", Toast.LENGTH_LONG).show()
+            }
+        }else{
+            val hh = currHh - lastHH
+            if(hh < 2) {
+                if (currMin >= lastMM) {
+                    if (currSec >= lastSS) {
+                        //set edittext limits for endtime
+                        timeInputMMIndex = endTime
+                        Toast.makeText(applicationContext, "Time Finish", Toast.LENGTH_LONG).show()
+                    } else {
+                        timeInputMMIndex = 60 - 1
+                    }
+                } else {
+                    if (currSec >= lastSS) {
+                        val temp = 60 - lastMM
+                        timeInputMMIndex = temp + currMin
+                    } else {
+                        val temp = 60 - lastMM
+                        timeInputMMIndex = temp + currMin - 1
+                    }
+                }
+            }else{
+                //set edittext limits for endtime
+                timeInputMMIndex = endTime
+                Toast.makeText(applicationContext, "Time Finish", Toast.LENGTH_LONG).show()
+            }
+        }
+    }
+
     fun getDaysIndex(): Int {
         return dayInputIndex
     }
 
     fun getTimeIndex(): Int {
-        return timeInputIndex
+        val currLastHH = calendar?.get(Calendar.HOUR_OF_DAY) as Int
+        val currLastMM = calendar?.get(Calendar.MINUTE) as Int
+        val nEndTimeCall = sharedPreferences?.getInt("endTime", 0) as Int
+        calTimeHHIndex(currLastHH,currLastMM,nEndTimeCall)
+        return timeInputHHIndex
+    }
+
+    fun getTimeMinIndex(): Int{
+        return timeInputMMIndex
     }
 
     fun getDaysInTime(): Int {
@@ -343,6 +472,10 @@ class MainActivity : AppCompatActivity() {
         } else {
             ""
         }
+    }
+
+    fun getTimeMode(): Boolean{
+        return timeMode
     }
 
     fun getCurrLastHH(): Int {

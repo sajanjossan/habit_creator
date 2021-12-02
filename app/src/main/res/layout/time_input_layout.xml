@@ -20,7 +20,7 @@
             android:layout_gravity="center_vertical"
             android:ems="8"
             android:gravity="center"
-            android:hint="@string/time_formatHH"
+            android:hint="@string/time_formatHint"
             android:inputType="time"
             android:singleLine="true"
             android:textColorHint="#C1C1C1" />
