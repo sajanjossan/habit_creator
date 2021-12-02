@@ -425,15 +425,20 @@ class MainActivity : AppCompatActivity() {
         return dayInputIndex
     }
 
-    fun getTimeIndex(): Int {
-        val currLastHH = calendar?.get(Calendar.HOUR_OF_DAY) as Int
-        val currLastMM = calendar?.get(Calendar.MINUTE) as Int
+    fun getTimeHHIndex(): Int {
+        val nCurrLastHH = sharedPreferences?.getInt("currLastHH", 0) as Int
+        val nCurrLastMM = sharedPreferences?.getInt("currLastMM", 0) as Int
         val nEndTimeCall = sharedPreferences?.getInt("endTime", 0) as Int
-        calTimeHHIndex(currLastHH,currLastMM,nEndTimeCall)
+        calTimeHHIndex(nCurrLastHH,nCurrLastMM,nEndTimeCall)
         return timeInputHHIndex
     }
 
     fun getTimeMinIndex(): Int{
+        val nLastHhTmSixty = sharedPreferences?.getInt("lastHHTimeModeSixty",0)as Int
+        val nLastMmTmSixty = sharedPreferences?.getInt("lastMMTimeModeSixty",0)as Int
+        val nLastSsTmSixty = sharedPreferences?.getInt("lastSSTimeModeSixty",0)as Int
+        val nEndTimeCall = sharedPreferences?.getInt("endTime", 0) as Int
+        calTimeMinIndex(nLastHhTmSixty,nLastMmTmSixty,nLastSsTmSixty,nEndTimeCall)
         return timeInputMMIndex
     }
 

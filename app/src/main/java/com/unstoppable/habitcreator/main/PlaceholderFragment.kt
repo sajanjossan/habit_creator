@@ -33,7 +33,11 @@ class PlaceholderFragment(context: Context) : Fragment() {
         }
     }
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View? {
         val root = inflater.inflate(R.layout.fragment_main, container, false)
         val imageView: ImageView = root.findViewById(R.id.ImageViewerID)
         val leftNoteTextView: TextView = root.findViewById(R.id.LeftNoteTextViewID)
@@ -51,8 +55,7 @@ class PlaceholderFragment(context: Context) : Fragment() {
         val timeMinUIArray = dataArrayClassObj.getTimeMinUIArray()
         val daysUIArray = dataArrayClassObj.getDaysUIArray()
         val daysTwentyOneArray = dataArrayClassObj.getDaysTwentyOneUIArray()
-        val timeIndex = (nContext as MainActivity).getTimeIndex()
-        val daysIndex = (nContext).getDaysIndex()
+        val daysIndex = (nContext as MainActivity).getDaysIndex()
         val daysInTime = (nContext).getDaysInTime()
 
         var isLayoutVisible = false
@@ -64,21 +67,21 @@ class PlaceholderFragment(context: Context) : Fragment() {
 
         titleEnterButton.setOnClickListener {
             val inputTitleText = titleEnterEditText.text.toString()
-            if(tabSection!! <= 1) {
+            if (tabSection!! <= 1) {
                 if (inputTitleText == "") {
                     topicTextView.text = resources.getString(R.string.text)
-                    saveString("TitleStringYears",resources.getString(R.string.text))
+                    saveString("TitleStringYears", resources.getString(R.string.text))
                 } else {
                     topicTextView.text = inputTitleText
-                    saveString("TitleStringYears",inputTitleText)
+                    saveString("TitleStringYears", inputTitleText)
                 }
-            }else{
+            } else {
                 if (inputTitleText == "") {
                     topicTextView.text = resources.getString(R.string.text)
-                    saveString("TitleStringMonths",resources.getString(R.string.text))
+                    saveString("TitleStringMonths", resources.getString(R.string.text))
                 } else {
                     topicTextView.text = inputTitleText
-                    saveString("TitleStringMonths",inputTitleText)
+                    saveString("TitleStringMonths", inputTitleText)
                 }
             }
             titlePickerLayout.visibility = View.GONE
@@ -103,18 +106,21 @@ class PlaceholderFragment(context: Context) : Fragment() {
             if (tabSection!! <= 1) {
                 if (getString("TitleStringYears") == "") {
                     topicTextView.text = resources.getString(R.string.text)
-                }else{
+                } else {
                     topicTextView.text = getString("TitleStringYears")
                 }
                 leftNoteTextView.text = (nContext).getStartTextViewTime()
-                if((nContext).getTimeMode()) {
+
+                if ((nContext).getTimeMode()) {
                     //60 time format
-                    threadFun(imageView, timeMinUIArray)
+                    val indexHH = (nContext).getTimeHHIndex()
+                    threadFun(imageView, timeMinUIArray, indexHH)
                     rightNoteTextView.text = (nContext).getEndTextViewTime()
-                }else{
+                } else {
                     //24 time format
-                        threadFun(imageView,timeUiArray)
-                        //tirhg time edit below
+                    val indexMM = (nContext).getTimeMinIndex()
+                    threadFun(imageView, timeUiArray,indexMM)
+                    //end time edit below
                     rightNoteTextView.text = (nContext).getEndTextViewTime()
                 }
 //              imageView.setImageResource(timeUiArray[timeIndex])
@@ -135,7 +141,7 @@ class PlaceholderFragment(context: Context) : Fragment() {
             } else {
                 if (getString("TitleStringMonths") == "") {
                     topicTextView.text = resources.getString(R.string.text)
-                }else{
+                } else {
                     topicTextView.text = getString("TitleStringMonths")
                 }
                 if (daysInTime > 21)
@@ -152,12 +158,12 @@ class PlaceholderFragment(context: Context) : Fragment() {
         return root
     }
 
-    private fun saveString(strKey : String,str: String) {
+    private fun saveString(strKey: String, str: String) {
         sharedPreferencesEdit?.putString(strKey, str)
         sharedPreferencesEdit?.apply()
     }
 
-    private fun getString(strKey : String): String {
+    private fun getString(strKey: String): String {
         return sharedPreferences?.getString(strKey, "").toString()
     }
 
@@ -169,17 +175,11 @@ class PlaceholderFragment(context: Context) : Fragment() {
         }
     }
 
-    private fun threadFun(im : ImageView,timeArray : Array<Int>) {
+    private fun threadFun(im: ImageView, timeArray: Array<Int>, index: Int) {
         Thread(Runnable {
-            while(true) {
-                if((nContext as MainActivity).getTimeMode()) {
-                    //60
-                    im.setImageResource(timeArray[(nContext).getTimeIndex()])
-                }else{
-                    //24
-                    im.setImageResource(timeArray[(nContext).getTimeMinIndex()])
-                }
-                Thread.sleep(62000)
+            while (true) {
+                im.setImageResource(timeArray[index])
+                Thread.sleep(1000)
             }
         }).start()
     }
