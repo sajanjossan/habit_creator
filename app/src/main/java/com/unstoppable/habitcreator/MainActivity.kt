@@ -1,20 +1,22 @@
 package com.unstoppable.habitcreator
 
 import android.content.Context
+import android.content.Intent
 import android.content.SharedPreferences
+import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.text.Editable
 import android.text.TextWatcher
 import android.view.View
 import android.widget.*
-import androidx.core.util.rangeTo
 import androidx.viewpager.widget.ViewPager
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.tabs.TabLayout
 import com.unstoppable.habitcreator.main.SectionsPagerAdapter
 import kotlinx.android.synthetic.main.activity_main.*
-import java.text.DecimalFormat
 import java.util.*
 
 class MainActivity : AppCompatActivity() {
@@ -43,12 +45,15 @@ class MainActivity : AppCompatActivity() {
 
     private var calendar: Calendar? = null
 
+    private var viewPager: ViewPager? = null
+
     private var nLastHhTmSixty: Int = 0
     private var nLastMmTmSixty: Int = 0
     private var nLastSsTmSixty: Int = 0
     private var nCurrLastHH: Int = 0
     private var nCurrLastMM: Int = 0
-    private var nEndTimeCall: Int = 0
+    private var nEndTimeCallHH: Int = 0
+    private var nEndTimeCallMM: Int = 0
     private var nStartingDayDate: Int = 0
     private var nStartingDayMonth: Int = 0
     private var nCurrLastDayOfTheYear: Int = 0
@@ -62,12 +67,16 @@ class MainActivity : AppCompatActivity() {
     private var currLastHH: Int = 0
     private var currLastHHH: Int = 0
 
+    private var fragmentID: Int = 0
+
     private var strOne = ""
     private var strTwo = ""
 
     private var timeMode = false
 
     private var tabLayout: TabLayout? = null
+
+    private var refreshTrigger  = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -117,6 +126,8 @@ class MainActivity : AppCompatActivity() {
 
         timeInputFloatingBtnID?.setOnLongClickListener {
             timeMode = !timeMode
+            sharedPreferencesEdit?.putBoolean("TimeMode", timeMode)
+            sharedPreferencesEdit?.apply()
             refreshLayouts()
             true
         }
@@ -140,6 +151,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         refreshUIFloatingButton?.setOnClickListener {
+            refreshTrigger = true
             refreshLayouts()
         }
 
@@ -200,6 +212,8 @@ class MainActivity : AppCompatActivity() {
                     sharedPreferencesEdit?.apply()
                     sharedPreferencesEdit?.putInt("lastSSTimeModeSixty", lastSS)
                     sharedPreferencesEdit?.apply()
+                    sharedPreferencesEdit?.putInt("endTimeMM", endTime)
+                    sharedPreferencesEdit?.apply()
                     calTimeMinIndex(lastHH, lastMM, lastSS, endTime)
                 } else {
                     //24
@@ -209,10 +223,10 @@ class MainActivity : AppCompatActivity() {
                     sharedPreferencesEdit?.apply()
                     sharedPreferencesEdit?.putInt("currLastMM", currLastMM)
                     sharedPreferencesEdit?.apply()
+                    sharedPreferencesEdit?.putInt("endTimeHH", endTime)
+                    sharedPreferencesEdit?.apply()
                     calTimeHHIndex(currLastHH, currLastMM, endTime)
                 }
-                sharedPreferencesEdit?.putInt("endTime", endTime)
-                sharedPreferencesEdit?.apply()
                 timeInputLayout?.visibility = View.GONE
                 timeLayoutVisibility = false
                 strOne = ""
@@ -232,7 +246,9 @@ class MainActivity : AppCompatActivity() {
                 sharedPreferencesEdit?.apply()
                 sharedPreferencesEdit?.putInt("currLastMM", 0)
                 sharedPreferencesEdit?.apply()
-                sharedPreferencesEdit?.putInt("endTime", 0)
+                sharedPreferencesEdit?.putInt("endTimeMM", 0)
+                sharedPreferencesEdit?.apply()
+                sharedPreferencesEdit?.putInt("endTimeHH", 0)
                 sharedPreferencesEdit?.apply()
             }
             refreshLayouts()
@@ -300,6 +316,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun refreshLayouts() {
+        loadViewPagerAdapter()
         sharedPreferences = getSharedPreferences("SharedPreferences", Context.MODE_PRIVATE)
         sharedPreferencesEdit = sharedPreferences!!.edit()
         nLastHhTmSixty = sharedPreferences?.getInt("lastHHTimeModeSixty", 0) as Int
@@ -307,26 +324,28 @@ class MainActivity : AppCompatActivity() {
         nLastSsTmSixty = sharedPreferences?.getInt("lastSSTimeModeSixty", 0) as Int
         nCurrLastHH = sharedPreferences?.getInt("currLastHH", 0) as Int
         nCurrLastMM = sharedPreferences?.getInt("currLastMM", 0) as Int
-        nEndTimeCall = sharedPreferences?.getInt("endTime", 0) as Int
+        nEndTimeCallHH = sharedPreferences?.getInt("endTimeHH", 0) as Int
+        nEndTimeCallMM = sharedPreferences?.getInt("endTimeMM", 0) as Int
         daysInTime = sharedPreferences?.getInt("DaysInTime", 0) as Int
         nStartingDayDate = sharedPreferences?.getInt("DateOfStartingDay", 0) as Int
         nStartingDayMonth = sharedPreferences?.getInt("MonthOfStartingDay", 0) as Int
         nCurrLastDayOfTheYear = sharedPreferences?.getInt("currLastDayOfTheYear", 0) as Int
         nStartingDayFullDate = sharedPreferences?.getInt("nStartingDayFullDate", 0) as Int
+        timeMode = sharedPreferences?.getBoolean("TimeMode", false) as Boolean
 
         if (timeMode) {
             //60
-            if (nLastMmTmSixty != 0) {
-                calTimeMinIndex(nLastHhTmSixty, nLastMmTmSixty, nLastSsTmSixty, nEndTimeCall)
-                timeInputEditText?.setText(nEndTimeCall.toString())
+            if (nEndTimeCallMM != 0) {
+                calTimeMinIndex(nLastHhTmSixty, nLastMmTmSixty, nLastSsTmSixty, nEndTimeCallMM)
+                timeInputEditText?.setText(nEndTimeCallMM.toString())
             } else {
                 timeInputMMIndex = 0
             }
         } else {
             //24
-            if (nCurrLastHH != 0) {
-                calTimeHHIndex(nCurrLastHH, nCurrLastMM, nEndTimeCall)
-                timeInputEditText?.setText(nEndTimeCall.toString())
+            if (nEndTimeCallHH != 0) {
+                calTimeHHIndex(nCurrLastHH, nCurrLastMM, nEndTimeCallHH)
+                timeInputEditText?.setText(nEndTimeCallHH.toString())
             } else {
                 timeInputHHIndex = 0
             }
@@ -336,6 +355,14 @@ class MainActivity : AppCompatActivity() {
         } else
             dayInputIndex = 0
         loadViewPagerAdapter()
+
+        if(refreshTrigger) {
+            refreshTrigger = false
+            if (Build.VERSION.SDK_INT >= 21)
+                finishAndRemoveTask()
+            else
+                finish()
+        }
     }
 
     private fun calDaysIndex(endDayTime: Int, lastDayOfTheYear: Int) {
@@ -371,64 +398,81 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun calTimeMinIndex(lastHH: Int, lastMM: Int, lastSS: Int, endTime: Int) {
-        val currHh = calendar?.get(Calendar.HOUR_OF_DAY) as Int
-        val currMin = calendar?.get(Calendar.MINUTE) as Int
-        val currSec = calendar?.get(Calendar.SECOND) as Int
+        try {
+            val currHh = calendar?.get(Calendar.HOUR_OF_DAY) as Int
+            val currMin = calendar?.get(Calendar.MINUTE) as Int
+            val currSec = calendar?.get(Calendar.SECOND) as Int
 
-        if (currHh == lastHH) {
-            if (currSec >= lastSS)
-                timeInputMMIndex = currMin - lastMM
-            else
-                timeInputMMIndex = (currMin - 1) - lastMM
-        } else if (currHh < lastHH) {
-            if (currHh < 2) {
-                if (currMin >= lastMM) {
-                    if (currSec >= lastSS) {
-                        //set edittext limits for endtime
-                        timeInputMMIndex = endTime
-                        Toast.makeText(applicationContext, "Time Finish", Toast.LENGTH_LONG).show()
+            if (currHh == lastHH) {
+                if (currSec >= lastSS)
+                    timeInputMMIndex = currMin - lastMM
+                else {
+                    val temp = currMin - lastMM
+                    if (temp > 0)
+                        timeInputMMIndex = temp - 1
+                }
+            } else if (currHh < lastHH) {
+                if (currHh < 2) {
+                    if (currMin >= lastMM) {
+                        if (currSec >= lastSS) {
+                            timeInputMMIndex = endTime
+                            runOnUiThread {
+                                Toast.makeText(applicationContext, "Time Finish", Toast.LENGTH_LONG)
+                                    .show()
+                            }
+                        } else {
+                            timeInputMMIndex = 60 - 1
+                        }
                     } else {
-                        timeInputMMIndex = 60 - 1
+                        if (currSec >= lastSS) {
+                            val temp = 60 - lastMM
+                            timeInputMMIndex = temp + currMin
+                        } else {
+                            val temp = 60 - lastMM
+                            timeInputMMIndex = temp + currMin - 1
+                        }
                     }
                 } else {
-                    if (currSec >= lastSS) {
-                        val temp = 60 - lastMM
-                        timeInputMMIndex = temp + currMin
-                    } else {
-                        val temp = 60 - lastMM
-                        timeInputMMIndex = temp + currMin - 1
+                    //set edittext limits for endtime
+                    timeInputMMIndex = endTime
+                    runOnUiThread {
+                        Toast.makeText(applicationContext, "Time Finish", Toast.LENGTH_LONG).show()
                     }
                 }
             } else {
-                //set edittext limits for endtime
-                timeInputMMIndex = endTime
-                Toast.makeText(applicationContext, "Time Finish", Toast.LENGTH_LONG).show()
-            }
-        } else {
-            val hh = currHh - lastHH
-            if (hh < 2) {
-                if (currMin >= lastMM) {
-                    if (currSec >= lastSS) {
-                        //set edittext limits for endtime
-                        timeInputMMIndex = endTime
-                        Toast.makeText(applicationContext, "Time Finish", Toast.LENGTH_LONG).show()
+                val hh = currHh - lastHH
+                if (hh == 1) {
+                    if (currMin >= lastMM) {
+                        if (currSec >= lastSS) {
+                            //set edittext limits for endtime
+                            timeInputMMIndex = endTime
+                            runOnUiThread {
+                                Toast.makeText(applicationContext, "Time Finish", Toast.LENGTH_LONG)
+                                    .show()
+                            }
+                        } else {
+                            timeInputMMIndex = 60 - 1
+                        }
                     } else {
-                        timeInputMMIndex = 60 - 1
+                        if (currSec >= lastSS) {
+                            val temp = 60 - lastMM
+                            timeInputMMIndex = temp + currMin
+                        } else {
+                            val temp = 60 - lastMM
+                            timeInputMMIndex = temp + currMin - 1
+                        }
                     }
                 } else {
-                    if (currSec >= lastSS) {
-                        val temp = 60 - lastMM
-                        timeInputMMIndex = temp + currMin
-                    } else {
-                        val temp = 60 - lastMM
-                        timeInputMMIndex = temp + currMin - 1
+                    //set edittext limits for endtime
+                    timeInputMMIndex = endTime
+                    runOnUiThread {
+                        Toast.makeText(applicationContext, "Time Finish", Toast.LENGTH_LONG).show()
                     }
                 }
-            } else {
-                //set edittext limits for endtime
-                timeInputMMIndex = endTime
-                Toast.makeText(applicationContext, "Time Finish", Toast.LENGTH_LONG).show()
             }
+        } catch (e: Exception) {
+            Toast.makeText(applicationContext, "Exception in calculation", Toast.LENGTH_SHORT).show()
+            e.printStackTrace()
         }
     }
 
@@ -439,9 +483,9 @@ class MainActivity : AppCompatActivity() {
     fun getTimeHHIndex(): Int {
         val nCurrLastHH = sharedPreferences?.getInt("currLastHH", 0) as Int
         val nCurrLastMM = sharedPreferences?.getInt("currLastMM", 0) as Int
-        val nEndTimeCall = sharedPreferences?.getInt("endTime", 0) as Int
-        if (nEndTimeCall != 0)
-            calTimeHHIndex(nCurrLastHH, nCurrLastMM, nEndTimeCall)
+        val nEndTimeCallHH = sharedPreferences?.getInt("endTimeHH", 0) as Int
+        if (nEndTimeCallHH != 0)
+            calTimeHHIndex(nCurrLastHH, nCurrLastMM, nEndTimeCallHH)
         return timeInputHHIndex
     }
 
@@ -449,10 +493,14 @@ class MainActivity : AppCompatActivity() {
         val nLastHhTmSixty = sharedPreferences?.getInt("lastHHTimeModeSixty", 0) as Int
         val nLastMmTmSixty = sharedPreferences?.getInt("lastMMTimeModeSixty", 0) as Int
         val nLastSsTmSixty = sharedPreferences?.getInt("lastSSTimeModeSixty", 0) as Int
-        val nEndTimeCall = sharedPreferences?.getInt("endTime", 0) as Int
-        if (nEndTimeCall != 0)
-            calTimeMinIndex(nLastHhTmSixty, nLastMmTmSixty, nLastSsTmSixty, nEndTimeCall)
+        val nEndTimeCallMM = sharedPreferences?.getInt("endTimeMM", 0) as Int
+        if (nEndTimeCallMM != 0)
+            calTimeMinIndex(nLastHhTmSixty, nLastMmTmSixty, nLastSsTmSixty, nEndTimeCallMM)
         return timeInputMMIndex
+    }
+
+    fun setFragmentID(id: Int) {
+        fragmentID = id
     }
 
     fun getDaysInTime(): Int {
@@ -477,7 +525,7 @@ class MainActivity : AppCompatActivity() {
             if (nCurrLastHH > 12)
                 currLastHHH = nCurrLastHH - 12
             var timeHH = 0
-            val t = 24 - nEndTimeCall
+            val t = 24 - nEndTimeCallHH
             timeHH = if (t > currLastHHH) {
                 val tt = t - currLastHHH
                 24 - tt
@@ -493,7 +541,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun getTimeMode(): Boolean {
-        return timeMode
+        return sharedPreferences?.getBoolean("TimeMode", false) as Boolean
     }
 
     fun getCurrLastHH(): Int {
@@ -551,10 +599,16 @@ class MainActivity : AppCompatActivity() {
 
     private fun loadViewPagerAdapter() {
         val sectionsPagerAdapter = SectionsPagerAdapter(this, supportFragmentManager)
-        val viewPager: ViewPager = findViewById(R.id.view_pager)
-        viewPager.adapter = sectionsPagerAdapter
+        viewPager = findViewById(R.id.view_pager)
+        viewPager?.adapter = sectionsPagerAdapter
         tabLayout = findViewById(R.id.tabs)
         tabLayout?.setupWithViewPager(viewPager)
+//        try {
+//            val frag = supportFragmentManager.findFragmentById(fragmentID) as PlaceholderFragment
+//            supportFragmentManager.beginTransaction().detach(frag).attach(frag).commit()
+//        } catch (e: Exception) {
+//            Toast.makeText(applicationContext, "exception", Toast.LENGTH_LONG).show()
+//        }
     }
 
     override fun onPause() {
